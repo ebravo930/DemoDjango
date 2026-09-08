@@ -24,6 +24,11 @@ class Task(models.Model):
         IN_PROGRESS = 'IN_PROGRESS', 'En progreso'
         COMPLETED = 'COMPLETED', 'Completada'
 
+    class Priority(models.TextChoices):
+        LOW = 'LOW', 'Baja'
+        MEDIUM = 'MEDIUM', 'Media'
+        HIGH = 'HIGH', 'Alta'
+
     title = models.CharField('título', max_length=200)
     description = models.TextField('descripción', blank=True)
     due_date = models.DateField('fecha de vencimiento')
@@ -32,6 +37,12 @@ class Task(models.Model):
         max_length=20,
         choices=Status.choices,
         default=Status.PENDING,
+    )
+    priority = models.CharField(
+        'prioridad',
+        max_length=20,
+        choices=Priority.choices,
+        default=Priority.MEDIUM,
     )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

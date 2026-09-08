@@ -17,7 +17,7 @@ class TaskForm(forms.ModelForm):
     class Meta:
         model = Task
         # `user` NO está en el formulario: lo asigna la capa de servicio.
-        fields = ['title', 'description', 'due_date', 'status']
+        fields = ['title', 'description', 'due_date', 'status', 'priority']
         widgets = {
             'title': forms.TextInput(
                 attrs={
@@ -36,6 +36,7 @@ class TaskForm(forms.ModelForm):
                 attrs={'class': 'form-control', 'type': 'date'}
             ),
             'status': forms.Select(attrs={'class': 'form-select'}),
+            'priority': forms.Select(attrs={'class': 'form-select'}),
         }
 
     def clean_due_date(self):

@@ -39,6 +39,15 @@ class TaskModelTests(TestCase):
     def test_status_defaults_to_pending(self):
         self.assertEqual(self.task.status, Task.Status.PENDING)
 
+    def test_priority_defaults_to_medium(self):
+        self.assertEqual(self.task.priority, Task.Priority.MEDIUM)
+
+    def test_priority_accepts_high_value(self):
+        self.task.priority = Task.Priority.HIGH
+        self.task.save(update_fields=['priority'])
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.priority, Task.Priority.HIGH)
+
     def test_for_user_only_returns_own_tasks(self):
         Task.objects.create(
             title='Tarea de otro usuario',
@@ -96,6 +105,23 @@ class TaskServiceTests(TestCase):
         result = services.mark_as_completed(task)
         self.assertEqual(result.status, Task.Status.COMPLETED)
 
+    def test_create_task_stores_priority(self):
+        task = services.create_task(
+            user=self.ana,
+            title='Tarea urgente',
+            due_date='2026-09-21',
+            priority=Task.Priority.HIGH,
+        )
+        self.assertEqual(task.priority, Task.Priority.HIGH)
+
+    def test_create_task_defaults_priority_to_medium(self):
+        task = services.create_task(
+            user=self.ana,
+            title='Tarea sin prioridad definida',
+            due_date='2026-09-21',
+        )
+        self.assertEqual(task.priority, Task.Priority.MEDIUM)
+
 
 class TaskFormTests(TestCase):
     """Pruebas de la capa de validación (forms.py)."""
@@ -106,6 +132,9 @@ class TaskFormTests(TestCase):
     def test_form_excludes_user_field(self):
         self.assertNotIn('user', TaskForm.base_fields)
 
+    def test_form_includes_priority_field(self):
+        self.assertIn('priority', TaskForm.base_fields)
+
     def test_form_is_valid_with_future_due_date(self):
         form = TaskForm(
             data={
@@ -113,6 +142,7 @@ class TaskFormTests(TestCase):
                 'description': '',
                 'due_date': future_date(),
                 'status': Task.Status.PENDING,
+                'priority': Task.Priority.MEDIUM,
             }
         )
         self.assertTrue(form.is_valid(), form.errors)
@@ -125,6 +155,7 @@ class TaskFormTests(TestCase):
                 'description': '',
                 'due_date': past,
                 'status': Task.Status.PENDING,
+                'priority': Task.Priority.MEDIUM,
             }
         )
         self.assertFalse(form.is_valid())
@@ -200,6 +231,7 @@ class TaskViewTests(TestCase):
             'description': 'Creada desde la vista',
             'due_date': future_date(2),
             'status': Task.Status.PENDING,
+            'priority': Task.Priority.MEDIUM,
         }
         response = self.client.post(reverse('task_create'), data)
         self.assertRedirects(response, reverse('task_list'))
@@ -228,6 +260,7 @@ class TaskViewTests(TestCase):
             'description': 'Nueva descripción',
             'due_date': future_date(4),
             'status': Task.Status.COMPLETED,
+            'priority': Task.Priority.HIGH,
         }
         response = self.client.post(
             reverse('task_update', args=[self.ana_task.pk]), data
