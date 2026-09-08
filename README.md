@@ -96,14 +96,51 @@ Abre <http://127.0.0.1:8000> en tu navegador e inicia sesión con el usuario
 creado. La base de datos `db.sqlite3` está **ignorada por Git** (`.gitignore`),
 así que cada persona crea su propio usuario local.
 
-### Verificación con tests
+---
+
+## 🧪 Estrategia de testing por capas
+
+Los tests viven en `tasks/tests/` como un **paquete Python con un módulo por
+capa de responsabilidad** (`tasks/tests/test_<capa>.py`). Así se aprende qué
+tipo de test corresponde a cada componente y se ejecuta solo la capa que
+interesa:
 
 ```bash
-python manage.py test tasks
+# Ejecutar todas las pruebas del proyecto
+python manage.py test
+
+# Probar únicamente la capa de lógica de negocio (servicios)
+python manage.py test tasks.tests.test_services
+
+# Probar únicamente la capa de validación de formularios
+python manage.py test tasks.tests.test_forms
+
+# Probar la capa de persistencia o la capa de control
+python manage.py test tasks.tests.test_models
+python manage.py test tasks.tests.test_views
 ```
 
-La suite cubre las cuatro capas: modelo/QuerySet, servicios, formularios y
-vistas (protección de acceso y aislamiento de datos por usuario).
+### Tabla comparativa: ¿qué prueba cada capa?
+
+| Capa probada | Archivo de prueba | ¿Qué se evalúa? | ¿Requiere simular HTTP? |
+|---|---|---|---|
+| **Modelos** (persistencia) | `test_models.py` | Esquema, valores por defecto, integridad referencial y custom querysets (`for_user`) | No |
+| **Servicios** (dominio) | `test_services.py` | Reglas de negocio puras, excepciones de dominio (`ValueError` / `PermissionError`) y cambios de estado | No |
+| **Formularios** (validación) | `test_forms.py` | Validación de inputs, formato de fechas ISO y mensajes de error | No |
+| **Vistas** (control) | `test_views.py` | Control de acceso (`LoginRequiredMixin`), respuestas HTTP, redirecciones y renders | Sí (`self.client.get/post`) |
+
+### ¿Por qué esta estructura?
+
+1. **Desmitifica que todo se prueba con `self.client`**: los alumnos suelen
+   creer que en Django siempre hay que hacer peticiones HTTP. Ver que
+   `test_services.py` solo crea objetos y llama funciones Python estándar
+   refuerza de inmediato la ventaja de tener una capa de servicios.
+2. **Verificación rápida de bugs**: con `test_forms.py` se comprueba
+   programáticamente por qué el formato de fecha ISO `YYYY-MM-DD` es el único
+   que pasa la validación del navegador y de Django.
+3. **Seguridad reforzada**: al testear `PermissionError` en el servicio y el
+   redirect en las vistas, se ve la seguridad en dos niveles: el controlador
+   (UI/ruta) y el dominio (negocio).
 
 ---
 
@@ -156,7 +193,11 @@ DemoDjango/
     ├── urls.py                # Rutas de la app
     ├── admin.py
     ├── migrations/
-    ├── tests.py               # Tests de todas las capas
+    ├── tests/                 # 🧪 Suite por capas (un módulo por capa)
+    │   ├── test_models.py     #    Persistencia: ORM, defaults, for_user
+    │   ├── test_services.py   #    Dominio: reglas de negocio y excepciones
+    │   ├── test_forms.py      #    Validación: fechas ISO, clean_due_date
+    │   └── test_views.py      #    Control: HTTP, permisos y renders
     └── templates/tasks/       # 🎨 Presentación (list / form / delete)
 ```
 
