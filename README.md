@@ -27,6 +27,24 @@ Cada capa vive en un archivo único y tiene **una sola responsabilidad**:
 La **configuración** del proyecto (`settings.py`, `urls.py` raíz) vive en la
 carpeta `taskflow/`, y las URLs de la aplicación en `tasks/urls.py`.
 
+### 🗺️ Mapa de Arquitectura Interactivo
+
+El proyecto incluye un mapa de arquitectura navegable generado con Archify:
+
+- **Ver diagrama:** abre `docs/diagrams/taskflow-architecture.html` en tu navegador.
+- **Enfoque directo en la capa de vistas:** `docs/diagrams/taskflow-architecture.html#focus=views`
+- **Enfoque en servicios de dominio:** `docs/diagrams/taskflow-architecture.html#focus=services`
+
+**Cómo estudiar el ciclo de vida de un request con el visor:**
+
+- Alterna el **modo oscuro/claro** (botón superior) según tu preferencia.
+- Usa la **lupa (pan/zoom)** para acercarte a una capa: cada nodo muestra su
+  archivo real del repositorio (`views.py`, `forms.py`, `services.py`, ...).
+- Haz clic en una **relación** para inspeccionar la dependencia: qué capa
+  invoca a cuál y con qué protocolo (HTTP, llamada a servicio, ORM).
+- La **vista de flujo** resalta el camino principal de una petición:
+  Navegador → Controlador → Servicio → Persistencia → respuesta HTML.
+
 ### ¿Por qué separar capas?
 
 - Un cambio de regla de negocio toca `services.py`, **no** los templates.

@@ -45,3 +45,7 @@ db.sqlite3-journal
 
 # Credenciales / secretos
 .env
+.env.local
+
+# Diagramas: evidencia visual regenerable de archify (visual-check)
+docs/diagrams/*.visual-check.*
