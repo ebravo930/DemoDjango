@@ -56,3 +56,21 @@ class TaskFormTests(TestCase):
         rendered = str(form['due_date'])
         self.assertIn('type="date"', rendered)
         self.assertIn('name="due_date"', rendered)
+
+    # --- Rama dev (WIP): campo priority ---
+
+    def test_form_includes_priority_field(self):
+        self.assertIn('priority', TaskForm.base_fields)
+
+    def test_form_rejects_unknown_priority_value(self):
+        form = TaskForm(
+            data={
+                'title': 'Prioridad inexistente',
+                'description': '',
+                'due_date': (date.today() + timedelta(days=3)).isoformat(),
+                'status': Task.Status.PENDING,
+                'priority': 'URGENTE',
+            }
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn('priority', form.errors)

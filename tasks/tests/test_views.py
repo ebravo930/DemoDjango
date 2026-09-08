@@ -147,3 +147,121 @@ class TaskViewTests(TestCase):
         response = self.client.post(reverse('task_delete', args=[self.ana_task.pk]))
         self.assertRedirects(response, reverse('task_list'))
         self.assertFalse(Task.objects.filter(pk=self.ana_task.pk).exists())
+
+    # --- Rama dev (WIP): filtros rápidos, métricas y prioridad ---
+
+    def test_task_list_filters_by_status(self):
+        services.create_task(
+            user=self.ana,
+            title='Publicar resultados',
+            due_date=future_date(7),
+            status=Task.Status.COMPLETED,
+        )
+        self.client.force_login(self.ana)
+        response = self.client.get(reverse('task_list'), {'status': 'COMPLETED'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Publicar resultados')
+        self.assertNotContains(response, 'Tarea de Ana')
+
+    def test_task_list_filters_by_priority(self):
+        services.create_task(
+            user=self.ana,
+            title='Corregir urgente',
+            due_date=future_date(8),
+            priority=Task.Priority.HIGH,
+        )
+        self.client.force_login(self.ana)
+        response = self.client.get(reverse('task_list'), {'priority': 'HIGH'})
+        self.assertContains(response, 'Corregir urgente')
+        self.assertNotContains(response, 'Tarea de Ana')
+
+    def test_task_list_ignores_invalid_filter_values(self):
+        self.client.force_login(self.ana)
+        response = self.client.get(
+            reverse('task_list'), {'status': 'HACKED', 'priority': 'URGENTE'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Tarea de Ana')
+
+    def test_task_list_context_has_counters(self):
+        for title in ['Publicar resultados', 'Cerrar actas']:
+            services.create_task(
+                user=self.ana,
+                title=title,
+                due_date=future_date(7),
+                status=Task.Status.COMPLETED,
+            )
+        services.create_task(
+            user=self.ana,
+            title='Revisar borradores',
+            due_date=future_date(9),
+            status=Task.Status.IN_PROGRESS,
+        )
+        self.client.force_login(self.ana)
+        response = self.client.get(reverse('task_list'))
+        self.assertEqual(response.context['pending_count'], 1)  # fixture
+        self.assertEqual(response.context['completed_count'], 2)
+        self.assertEqual(response.context['in_progress_count'], 1)
+        self.assertEqual(response.context['total_count'], 4)
+
+    def test_task_list_renders_priority_badges(self):
+        services.create_task(
+            user=self.ana,
+            title='Corregir urgente',
+            due_date=future_date(8),
+            priority=Task.Priority.HIGH,
+        )
+        self.client.force_login(self.ana)
+        response = self.client.get(reverse('task_list'))
+        self.assertContains(response, 'Prioridad alta')
+        self.assertContains(response, 'Prioridad media')  # valor por defecto
+
+
+class TaskStatusApiTests(TestCase):
+    """Rama dev (kanban WIP): endpoint JSON de cambio asíncrono de estado."""
+
+    def setUp(self):
+        self.ana = User.objects.create_user(username='ana', password='clave-123')
+        self.beto = User.objects.create_user(username='beto', password='clave-123')
+        self.ana_task = services.create_task(
+            user=self.ana,
+            title='Tarea para la API',
+            due_date=future_date(5),
+        )
+
+    def endpoint(self):
+        return reverse('task_status_update', args=[self.ana_task.pk])
+
+    def test_status_endpoint_requires_login(self):
+        response = self.client.post(self.endpoint(), {'status': 'COMPLETED'})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/accounts/login/', response.url)
+
+    def test_owner_changes_status_via_json(self):
+        self.client.force_login(self.ana)
+        response = self.client.post(self.endpoint(), {'status': 'COMPLETED'})
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload['ok'])
+        self.assertEqual(payload['status'], 'COMPLETED')
+        self.assertEqual(payload['status_display'], 'Completada')
+        self.ana_task.refresh_from_db()
+        self.assertEqual(self.ana_task.status, Task.Status.COMPLETED)
+
+    def test_status_endpoint_rejects_invalid_status(self):
+        self.client.force_login(self.ana)
+        response = self.client.post(self.endpoint(), {'status': 'URGENTE'})
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.json()['ok'])
+        self.ana_task.refresh_from_db()
+        self.assertEqual(self.ana_task.status, Task.Status.PENDING)
+
+    def test_status_endpoint_returns_404_for_foreign_task(self):
+        self.client.force_login(self.beto)
+        response = self.client.post(self.endpoint(), {'status': 'COMPLETED'})
+        self.assertEqual(response.status_code, 404)
+
+    def test_status_endpoint_rejects_get(self):
+        self.client.force_login(self.ana)
+        response = self.client.get(self.endpoint())
+        self.assertEqual(response.status_code, 405)

@@ -48,3 +48,14 @@ class TaskModelTests(TestCase):
     def test_verbose_names_are_set(self):
         self.assertEqual(Task._meta.verbose_name, 'tarea')
         self.assertEqual(Task._meta.verbose_name_plural, 'tareas')
+
+    # --- Rama dev (WIP): campo priority ---
+
+    def test_priority_defaults_to_medium(self):
+        self.assertEqual(self.task.priority, Task.Priority.MEDIUM)
+
+    def test_priority_accepts_high_value(self):
+        self.task.priority = Task.Priority.HIGH
+        self.task.save(update_fields=['priority'])
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.priority, Task.Priority.HIGH)
