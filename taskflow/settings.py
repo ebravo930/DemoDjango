@@ -10,10 +10,17 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Carga variables desde el archivo .env de la raíz (si existe) para
+# credenciales externas como Supabase. El archivo NO se versiona.
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -147,3 +154,11 @@ LOGGING = {
         },
     },
 }
+
+# --- Supabase: auditoría externa de eventos (rama dev) ---
+# Las credenciales se leen SOLO desde variables de entorno (.env local,
+# nunca versionado). Si faltan o están vacías, la integración queda
+# deshabilitada y la app funciona 100% local (fail-safe).
+SUPABASE_URL = os.getenv('SUPABASE_URL', '')
+SUPABASE_KEY = os.getenv('SUPABASE_KEY', '')
+SUPABASE_AUDIT_ENABLED = bool(SUPABASE_URL and SUPABASE_KEY)
