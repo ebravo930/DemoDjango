@@ -7,7 +7,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/ebravo930/DemoDjango",
-      "revision": "fde069b0cb6c62bda3afeb812772244affbc00d2"
+      "revision": "b68266f5a113744a64033153aca0c867a19d8822"
     }
   },
   "components": [
@@ -60,6 +60,15 @@
       "pos": [930, 300],
       "size": [200, 88],
       "sources": [{ "path": "tasks/models.py", "label": "esquema + ORM" }]
+    },
+    {
+      "id": "supabase",
+      "type": "cloud",
+      "label": "Supabase (auditoría en la nube)",
+      "sublabel": "PostgREST · tabla task_audit_log",
+      "tag": "rama dev · fail-safe",
+      "pos": [660, 100],
+      "size": [210, 72]
     },
     {
       "id": "sqlite",
@@ -118,6 +127,14 @@
       "labelDy": 68
     },
     {
+      "id": "audit-sync",
+      "from": "services",
+      "to": "supabase",
+      "label": "despacha eventos (CREATED · STATUS_CHANGED_TO_*)",
+      "variant": "dashed",
+      "labelDy": -34
+    },
+    {
       "id": "sql",
       "from": "models",
       "to": "sqlite",
@@ -155,7 +172,8 @@
       "title": "Controlador y dominio",
       "items": [
         "CBV protegidas con LoginRequiredMixin y aislamiento for_user",
-        "services.py: reglas puras sin request; update_task_status valida y autoriza"
+        "services.py: reglas puras sin request; update_task_status valida y autoriza",
+        "Rama dev: los servicios despachan auditoría a Supabase (fail-safe)"
       ]
     },
     {
