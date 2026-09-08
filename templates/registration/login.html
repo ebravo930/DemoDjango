@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Iniciar sesión · TaskFlow INACAP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-5 col-xl-4">
+        <div class="card shadow-sm border-0 card-inacap-top">
+            <div class="card-header bg-carbon text-white py-3">
+                <h1 class="h5 mb-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
+                </h1>
+            </div>
+            <div class="card-body p-4">
+                {% if form.errors %}
+                    <div class="alert alert-danger py-2 small" role="alert">
+                        Usuario o contraseña incorrectos. Inténtalo nuevamente.
+                    </div>
+                {% endif %}
+
+                <form method="post" action="{% url 'login' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ next }}">
+
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">Usuario</label>
+                        <input type="text" name="username" id="id_username"
+                               class="form-control" autofocus required
+                               placeholder="nombre.usuario">
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_password" class="form-label">Contraseña</label>
+                        <input type="password" name="password" id="id_password"
+                               class="form-control" required
+                               placeholder="••••••••">
+                    </div>
+
+                    <button type="submit" class="btn btn-inacap w-100">Entrar</button>
+                </form>
+            </div>
+            <div class="card-footer bg-white border-0 text-center small text-muted pb-3">
+                Demo académica · Desarrollo Back End
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
