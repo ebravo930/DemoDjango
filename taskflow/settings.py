@@ -152,6 +152,10 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'INFO',
         },
+        'tasks.supabase_client': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
     },
 }
 
