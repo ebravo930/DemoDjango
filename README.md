@@ -59,6 +59,10 @@ archivo (modelo, formulario, servicio, vista, template).
 2. **Auditoría y métricas** — `services.py` registra en consola cada creación
    y cambio de estado (`[AUDIT]`), y la vista de listado muestra contadores de
    tareas (pendientes / en progreso / completadas).
+3. **Endpoint de estado (kanban WIP)** — `TaskStatusUpdateView` acepta
+   `POST /tareas/<pk>/estado/` con `status=...` y responde `JsonResponse`
+   (200/400/403/404); la transición la gobierna `update_task_status` del
+   servicio (validación + autorización de dominio).
 
 Para mostrar a los alumnos el viaje de una feature entre ramas:
 
@@ -179,6 +183,7 @@ python manage.py test tasks.tests.test_views
 | `/nueva/` | `TaskCreateView` | Crear tarea |
 | `/tareas/<pk>/editar/` | `TaskUpdateView` | Editar tarea |
 | `/tareas/<pk>/eliminar/` | `TaskDeleteView` | Eliminar tarea (con confirmación) |
+| `/tareas/<pk>/estado/` | `TaskStatusUpdateView` | Cambio de estado asíncrono vía JSON (rama dev, kanban WIP) |
 | `/accounts/login/` | Auth nativa Django | Iniciar sesión |
 | `/accounts/logout/` | Auth nativa Django | Cerrar sesión |
 | `/admin/` | Django Admin | Panel administrativo |
