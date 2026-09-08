@@ -18,7 +18,7 @@ from .models import Task
 
 
 class TaskListView(LoginRequiredMixin, ListView):
-    """Lista las tareas del usuario autenticado."""
+    """Lista las tareas del usuario autenticado con filtros rápidos."""
 
     model = Task
     template_name = 'tasks/task_list.html'
@@ -26,7 +26,35 @@ class TaskListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         # Persistencia: el QuerySet personalizado aísla por usuario.
-        return Task.objects.for_user(self.request.user)
+        queryset = Task.objects.for_user(self.request.user)
+
+        # Rama dev (WIP): filtros rápidos por estado y prioridad (?status=).
+        status = self.request.GET.get('status', '')
+        if status in Task.Status.values:
+            queryset = queryset.filter(status=status)
+
+        priority = self.request.GET.get('priority', '')
+        if priority in Task.Priority.values:
+            queryset = queryset.filter(priority=priority)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        # Rama dev (WIP): métricas rápidas para el widget resumen.
+        context = super().get_context_data(**kwargs)
+        base = Task.objects.for_user(self.request.user)
+
+        context['total_count'] = base.count()
+        context['pending_count'] = base.filter(status=Task.Status.PENDING).count()
+        context['in_progress_count'] = base.filter(
+            status=Task.Status.IN_PROGRESS
+        ).count()
+        context['completed_count'] = base.filter(
+            status=Task.Status.COMPLETED
+        ).count()
+        context['current_status'] = self.request.GET.get('status', '')
+        context['current_priority'] = self.request.GET.get('priority', '')
+        return context
 
 
 class TaskCreateView(LoginRequiredMixin, CreateView):

@@ -15,6 +15,84 @@
     </a>
 </div>
 
+{# ===== Rama dev: widget resumen (métricas rápidas) ===== #}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3 py-3">
+                <span class="rounded-3 bg-warning bg-opacity-25 text-warning d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                    <i class="bi bi-hourglass-split fs-5"></i>
+                </span>
+                <div>
+                    <p class="text-muted small mb-0">Pendientes</p>
+                    <p class="h4 fw-bold mb-0">{{ pending_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3 py-3">
+                <span class="rounded-3 bg-info bg-opacity-25 text-info d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                    <i class="bi bi-arrow-repeat fs-5"></i>
+                </span>
+                <div>
+                    <p class="text-muted small mb-0">En progreso</p>
+                    <p class="h4 fw-bold mb-0">{{ in_progress_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3 py-3">
+                <span class="rounded-3 bg-success bg-opacity-25 text-success d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                    <i class="bi bi-check2-circle fs-5"></i>
+                </span>
+                <div>
+                    <p class="text-muted small mb-0">Completadas</p>
+                    <p class="h4 fw-bold mb-0">{{ completed_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3 py-3">
+                <span class="rounded-3 bg-carbon text-white d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                    <i class="bi bi-list-task fs-5"></i>
+                </span>
+                <div>
+                    <p class="text-muted small mb-0">Total</p>
+                    <p class="h4 fw-bold mb-0">{{ total_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ===== Rama dev: barra de filtros rápidos por estado y prioridad ===== #}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3">
+        <div class="d-flex flex-column flex-xl-row gap-3">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <span class="small fw-semibold text-muted me-1"><i class="bi bi-funnel me-1"></i>Estado:</span>
+                <a href="{% url 'task_list' %}" class="btn btn-sm {% if not current_status %}btn-inacap{% else %}btn-outline-inacap{% endif %}">Todas</a>
+                <a href="?status=PENDING" class="btn btn-sm {% if current_status == 'PENDING' %}btn-inacap{% else %}btn-outline-inacap{% endif %}">Pendientes</a>
+                <a href="?status=IN_PROGRESS" class="btn btn-sm {% if current_status == 'IN_PROGRESS' %}btn-inacap{% else %}btn-outline-inacap{% endif %}">En progreso</a>
+                <a href="?status=COMPLETED" class="btn btn-sm {% if current_status == 'COMPLETED' %}btn-inacap{% else %}btn-outline-inacap{% endif %}">Completadas</a>
+            </div>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <span class="small fw-semibold text-muted me-1"><i class="bi bi-flag me-1"></i>Prioridad:</span>
+                <a href="{% url 'task_list' %}" class="btn btn-sm {% if not current_priority %}btn-inacap{% else %}btn-outline-inacap{% endif %}">Todas</a>
+                <a href="?priority=HIGH" class="btn btn-sm {% if current_priority == 'HIGH' %}btn-inacap{% else %}btn-outline-inacap{% endif %}">Alta</a>
+                <a href="?priority=MEDIUM" class="btn btn-sm {% if current_priority == 'MEDIUM' %}btn-inacap{% else %}btn-outline-inacap{% endif %}">Media</a>
+                <a href="?priority=LOW" class="btn btn-sm {% if current_priority == 'LOW' %}btn-inacap{% else %}btn-outline-inacap{% endif %}">Baja</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% if tasks %}
     <div class="row g-3">
         {% for task in tasks %}
@@ -40,10 +118,20 @@
                             {% endif %}
                         </p>
 
-                        <p class="small mb-0 d-flex align-items-center gap-2 text-muted">
-                            <i class="bi bi-calendar-event text-inacap"></i>
-                            Vence: <strong class="text-dark">{{ task.due_date|date:'d/m/Y' }}</strong>
-                        </p>
+                        {# Rama dev: badge de prioridad + fecha de vencimiento #}
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-0">
+                            {% if task.priority == 'HIGH' %}
+                                <span class="badge bg-danger"><i class="bi bi-flag-fill me-1"></i>Prioridad alta</span>
+                            {% elif task.priority == 'MEDIUM' %}
+                                <span class="badge bg-secondary"><i class="bi bi-flag me-1"></i>Prioridad media</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark border"><i class="bi bi-flag me-1"></i>Prioridad baja</span>
+                            {% endif %}
+                            <span class="small d-flex align-items-center gap-1 text-muted ms-auto">
+                                <i class="bi bi-calendar-event text-inacap"></i>
+                                <strong class="text-dark">{{ task.due_date|date:'d/m/Y' }}</strong>
+                            </span>
+                        </div>
                     </div>
                     <div class="card-footer bg-white d-flex gap-2">
                         <a href="{% url 'task_update' task.pk %}"
@@ -62,8 +150,13 @@
 {% else %}
     <div class="alert alert-light border text-center py-5">
         <i class="bi bi-clipboard-check fs-1 d-block mb-2 text-muted"></i>
-        No tienes tareas todavía.
-        <a href="{% url 'task_create' %}" class="alert-link">Crea tu primera tarea</a>.
+        {% if current_status or current_priority %}
+            No hay tareas que coincidan con los filtros seleccionados.
+            <a href="{% url 'task_list' %}" class="alert-link">Limpiar filtros</a>.
+        {% else %}
+            No tienes tareas todavía.
+            <a href="{% url 'task_create' %}" class="alert-link">Crea tu primera tarea</a>.
+        {% endif %}
     </div>
 {% endif %}
 {% endblock %}

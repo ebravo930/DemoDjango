@@ -46,6 +46,33 @@ La rama `dev` **nace de `main`** y avanza en paralelo, tal como se trabaja en
 equipos reales: las características nuevas se desarrollan en `dev` y viajan a
 `main` cuando terminan (merge o Pull Request).
 
+### Diferencias entre ramas `main` y `dev`
+
+**`main` (estable):** CRUD esencial, autenticación y una responsabilidad por
+archivo (modelo, formulario, servicio, vista, template).
+
+**`dev` (en desarrollo) agrega:**
+
+1. **Prioridades y filtros** — campo `priority` (Baja/Media/Alta) y barra de
+   filtrado rápido por estado/prioridad. Un requerimiento así impacta *varias
+   capas a la vez*: modelo, migración, formulario, servicio, vista y template.
+2. **Auditoría y métricas** — `services.py` registra en consola cada creación
+   y cambio de estado (`[AUDIT]`), y la vista de listado muestra contadores de
+   tareas (pendientes / en progreso / completadas).
+
+Para mostrar a los alumnos el viaje de una feature entre ramas:
+
+```bash
+# Archivos que cambiaron entre la versión estable y dev
+git diff main..dev --stat
+
+# El impacto de "prioridades" capa por capa
+git diff main..dev -- taskflow/settings.py tasks/models.py tasks/forms.py
+git diff main..dev -- tasks/services.py
+git diff main..dev -- tasks/views.py
+git diff main..dev -- tasks/templates/tasks/task_list.html
+```
+
 ### Comandos de inspección para la clase
 
 ```bash
@@ -111,7 +138,7 @@ vistas (protección de acceso y aislamiento de datos por usuario).
 
 | Ruta | Vista | Descripción |
 |---|---|---|
-| `/` | `TaskListView` | Mis tareas (solo las del usuario autenticado) |
+| `/` | `TaskListView` | Mis tareas + contadores y filtros `?status=` / `?priority=` (rama dev) |
 | `/nueva/` | `TaskCreateView` | Crear tarea |
 | `/tareas/<pk>/editar/` | `TaskUpdateView` | Editar tarea |
 | `/tareas/<pk>/eliminar/` | `TaskDeleteView` | Eliminar tarea (con confirmación) |
@@ -130,6 +157,8 @@ vistas (protección de acceso y aislamiento de datos por usuario).
   navbar colapsable (hamburguesa) en móviles.
 - **Badges de estado:** `Pendiente` (warning), `En progreso` (info),
   `Completada` (success).
+- **Badges de prioridad (rama dev):** `Alta` (danger), `Media` (secondary),
+  `Baja` (light con borde).
 - Bootstrap 5 y Bootstrap Icons vía **CDN** (sin dependencias locales).
 
 ---
@@ -173,6 +202,13 @@ feat(tasks): implement task form with bootstrap widgets and validation
 feat(tasks): create crud views orchestrating forms and services
 feat(tasks): add fully responsive templates for task management
 docs: add comprehensive readme explaining architecture and setup
+```
+
+Rama `dev` (características en desarrollo):
+
+```bash
+feat(tasks): add task priority field and service handling [WIP]
+feat(ui): implement status filtering and summary counters in dev branch
 ```
 
 *Proyecto con fines exclusivamente académicos. Django, Bootstrap y las marcas
