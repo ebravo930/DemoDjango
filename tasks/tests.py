@@ -1,10 +1,14 @@
 """
-Tests de las capas de persistencia (modelo) y dominio (servicios).
+Tests de las capas de persistencia (modelo), dominio (servicios) y
+validación (formularios).
 """
+from datetime import date, timedelta
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from . import services
+from .forms import TaskForm
 from .models import Task
 
 User = get_user_model()
@@ -85,3 +89,37 @@ class TaskServiceTests(TestCase):
         )
         result = services.mark_as_completed(task)
         self.assertEqual(result.status, Task.Status.COMPLETED)
+
+
+class TaskFormTests(TestCase):
+    """Pruebas de la capa de validación (forms.py)."""
+
+    def setUp(self):
+        self.ana = User.objects.create_user(username='ana', password='clave-123')
+
+    def test_form_excludes_user_field(self):
+        self.assertNotIn('user', TaskForm.base_fields)
+
+    def test_form_is_valid_with_future_due_date(self):
+        form = TaskForm(
+            data={
+                'title': 'Preparar evaluación',
+                'description': '',
+                'due_date': (date.today() + timedelta(days=5)).isoformat(),
+                'status': Task.Status.PENDING,
+            }
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_form_rejects_past_due_date(self):
+        form = TaskForm(
+            data={
+                'title': 'Tarea con fecha vencida',
+                'description': '',
+                'due_date': (date.today() - timedelta(days=1)).isoformat(),
+                'status': Task.Status.PENDING,
+            }
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn('due_date', form.errors)
+        self.assertIn('no puede ser anterior', form.errors['due_date'][0])
