@@ -10,6 +10,8 @@ from django.urls import include, path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # Home: aplicación de tareas (vistas CRUD de la capa de control)
+    path('', include('tasks.urls')),
     # URLs nativas de autenticación: login, logout, cambio de contraseña, etc.
     path('accounts/', include('django.contrib.auth.urls')),
 ]
