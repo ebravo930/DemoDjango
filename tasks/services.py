@@ -15,6 +15,7 @@ protege la ruta (UI) y el servicio protege la regla de negocio (dominio).
 """
 import logging
 
+from . import supabase_client
 from .models import Task
 
 logger = logging.getLogger(__name__)
@@ -51,6 +52,11 @@ def create_task(
         task.get_status_display(),
         task.get_priority_display(),
     )
+
+    # Auditoría externa (rama dev): evento en la nube (fail-safe).
+    supabase_client.log_task_event_to_supabase(
+        task.pk, task.title, 'CREATED', task.user.username
+    )
     return task
 
 
@@ -82,6 +88,14 @@ def update_task_status(*, task, new_status, user):
         task.title,
         previous,
         task.get_status_display(),
+        task.user.username,
+    )
+
+    # Auditoría externa (rama dev): evento en la nube (fail-safe).
+    supabase_client.log_task_event_to_supabase(
+        task.pk,
+        task.title,
+        f'STATUS_CHANGED_TO_{task.status}',
         task.user.username,
     )
     return task
