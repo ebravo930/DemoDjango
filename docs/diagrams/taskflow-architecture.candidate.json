@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "TaskFlow INACAP — Arquitectura por capas en Django",
+    "output": "taskflow-architecture.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/ebravo930/DemoDjango",
+      "revision": "fde069b0cb6c62bda3afeb812772244affbc00d2"
+    }
+  },
+  "components": [
+    {
+      "id": "browser",
+      "type": "frontend",
+      "label": "Navegador del alumno",
+      "sublabel": "Bootstrap 5 · paleta INACAP",
+      "tag": "sesión + CSRF",
+      "pos": [40, 300],
+      "size": [210, 74],
+      "sources": [{ "path": "templates/base.html", "label": "layout INACAP" }]
+    },
+    {
+      "id": "views",
+      "type": "backend",
+      "label": "Controlador — views.py",
+      "sublabel": "CBV: list · create · update · delete",
+      "tag": "LoginRequiredMixin",
+      "pos": [340, 300],
+      "size": [220, 88],
+      "sources": [{ "path": "tasks/views.py", "label": "CBV + endpoint" }]
+    },
+    {
+      "id": "form",
+      "type": "backend",
+      "label": "Validación — forms.py",
+      "sublabel": "TaskForm (ModelForm)",
+      "tag": "clean_due_date",
+      "pos": [340, 110],
+      "size": [220, 68],
+      "sources": [{ "path": "tasks/forms.py", "label": "validación" }]
+    },
+    {
+      "id": "services",
+      "type": "backend",
+      "label": "Dominio — services.py",
+      "sublabel": "create_task · update_task_status",
+      "tag": "ValueError · PermissionError",
+      "pos": [660, 300],
+      "size": [210, 88],
+      "sources": [{ "path": "tasks/services.py", "label": "reglas de negocio" }]
+    },
+    {
+      "id": "models",
+      "type": "database",
+      "label": "Persistencia — models.py",
+      "sublabel": "Task · TaskQuerySet",
+      "tag": "for_user",
+      "pos": [930, 300],
+      "size": [200, 88],
+      "sources": [{ "path": "tasks/models.py", "label": "esquema + ORM" }]
+    },
+    {
+      "id": "sqlite",
+      "type": "database",
+      "label": "SQLite — db.sqlite3",
+      "sublabel": "BD local por alumno",
+      "tag": ".gitignore",
+      "pos": [945, 480],
+      "size": [170, 62]
+    },
+    {
+      "id": "templates",
+      "type": "frontend",
+      "label": "Presentación — templates/",
+      "sublabel": "base.html · list · form · delete",
+      "tag": "Bootstrap 5 CDN",
+      "pos": [340, 510],
+      "size": [220, 70]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "security-group",
+      "label": "Seguridad en dos niveles: ruta (LoginRequiredMixin) y dominio (PermissionError)",
+      "wraps": ["views", "services"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "request-in",
+      "from": "browser",
+      "to": "views",
+      "label": "HTTP GET/POST (CSRF + sesión)",
+      "variant": "emphasis",
+      "labelDy": -97
+    },
+    {
+      "id": "validate",
+      "from": "views",
+      "to": "form",
+      "label": "valida inputs (is_valid · clean_due_date)",
+      "labelDy": -24
+    },
+    {
+      "id": "orchestrate",
+      "from": "views",
+      "to": "services",
+      "label": "orquesta: create_task · update_task_status",
+      "labelDy": 76
+    },
+    {
+      "id": "persist",
+      "from": "services",
+      "to": "models",
+      "label": "ORM: Task.objects.for_user()",
+      "labelDy": 68
+    },
+    {
+      "id": "sql",
+      "from": "models",
+      "to": "sqlite",
+      "label": "esquema y consultas",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "render",
+      "from": "views",
+      "to": "templates",
+      "label": "render(context) → HTML",
+      "labelDy": 24
+    },
+    {
+      "id": "response",
+      "from": "templates",
+      "to": "browser",
+      "label": "HTTP 200 · HTML responsive",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Presentación y validación",
+      "items": [
+        "Templates Bootstrap 5 con identidad INACAP (#D3141F, #1E242B)",
+        "TaskForm con widgets form-control y regla clean_due_date"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Controlador y dominio",
+      "items": [
+        "CBV protegidas con LoginRequiredMixin y aislamiento for_user",
+        "services.py: reglas puras sin request; update_task_status valida y autoriza"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Seguridad y persistencia",
+      "items": [
+        "Seguridad en dos niveles: ruta (UI) y dominio (PermissionError)",
+        "Modelo Task + QuerySet for_user sobre SQLite por alumno"
+      ]
+    }
+  ]
+}

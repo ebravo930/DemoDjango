@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "TaskFlow INACAP — Ciclo de vida de una tarea",
+    "output": "taskflow-lifecycle.html",
+    "viewBox": [1060, 566],
+    "quality_profile": "showcase"
+  },
+  "lanes": [
+    { "id": "main", "label": "Ciclo de la tarea" }
+  ],
+  "states": [
+    {
+      "id": "pending",
+      "type": "start",
+      "label": "Pendiente",
+      "sublabel": "PENDING",
+      "lane": "main",
+      "col": 0,
+      "step": "01",
+      "tag": "create_task()"
+    },
+    {
+      "id": "inprogress",
+      "type": "active",
+      "label": "En progreso",
+      "sublabel": "IN_PROGRESS",
+      "lane": "main",
+      "col": 1,
+      "step": "02",
+      "tag": "update_task_status"
+    },
+    {
+      "id": "completed",
+      "type": "success",
+      "label": "Completada",
+      "sublabel": "COMPLETED",
+      "lane": "main",
+      "col": 2,
+      "step": "03",
+      "tag": "mark_as_completed"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "start-work",
+      "from": "pending",
+      "to": "inprogress",
+      "label": "empezar trabajo (solo el dueño)",
+      "labelDy": -46
+    },
+    {
+      "id": "finish",
+      "from": "inprogress",
+      "to": "completed",
+      "label": "completar (dueño)",
+      "variant": "emphasis",
+      "labelDy": -46
+    },
+    {
+      "id": "reopen",
+      "from": "completed",
+      "to": "pending",
+      "label": "reabrir desde el formulario de edición",
+      "variant": "dashed",
+      "route": "bottom-channel"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Camino principal",
+      "items": [
+        "Toda tarea nace Pendiente con create_task()",
+        "El dueño avanza el estado con update_task_status()",
+        "mark_as_completed salta de Pendiente a Completada (misma puerta)"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Guardas de dominio",
+      "items": [
+        "Cada transición exige ser el dueño: usuario ajeno lanza PermissionError",
+        "Un estado fuera de Task.Status lanza ValueError",
+        "La vista traduce las excepciones a HTTP 400 / 403 / 404"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Estados no terminales",
+      "items": [
+        "Completada puede reabrirse a Pendiente (formulario de edición)",
+        "La transición válida queda registrada en consola ([AUDIT], rama dev)",
+        "Los intentos rechazados nunca mutan la tarea"
+      ]
+    }
+  ]
+}
