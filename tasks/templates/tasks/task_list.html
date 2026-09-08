@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis tareas · TaskFlow INACAP{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h1 class="h3 mb-1">Mis tareas</h1>
+        <p class="text-muted mb-0">
+            Bienvenido(a), <strong>{{ user.username }}</strong>. Organiza tu trabajo y respeta las fechas de vencimiento.
+        </p>
+    </div>
+    <a href="{% url 'task_create' %}" class="btn btn-inacap">
+        <i class="bi bi-plus-lg me-1"></i>Nueva tarea
+    </a>
+</div>
+
+{% if tasks %}
+    <div class="row g-3">
+        {% for task in tasks %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <h2 class="h6 fw-bold mb-0">{{ task.title }}</h2>
+                            {% if task.status == 'PENDING' %}
+                                <span class="badge bg-warning text-dark text-nowrap">Pendiente</span>
+                            {% elif task.status == 'IN_PROGRESS' %}
+                                <span class="badge bg-info text-dark text-nowrap">En progreso</span>
+                            {% else %}
+                                <span class="badge bg-success text-nowrap">Completada</span>
+                            {% endif %}
+                        </div>
+
+                        <p class="card-text small text-muted mb-3">
+                            {% if task.description %}
+                                {{ task.description|linebreaksbr }}
+                            {% else %}
+                                <span class="fst-italic">Sin descripción</span>
+                            {% endif %}
+                        </p>
+
+                        <p class="small mb-0 d-flex align-items-center gap-2 text-muted">
+                            <i class="bi bi-calendar-event text-inacap"></i>
+                            Vence: <strong class="text-dark">{{ task.due_date|date:'d/m/Y' }}</strong>
+                        </p>
+                    </div>
+                    <div class="card-footer bg-white d-flex gap-2">
+                        <a href="{% url 'task_update' task.pk %}"
+                           class="btn btn-outline-inacap btn-sm flex-fill">
+                            <i class="bi bi-pencil me-1"></i>Editar
+                        </a>
+                        <a href="{% url 'task_delete' task.pk %}"
+                           class="btn btn-outline-danger btn-sm flex-fill">
+                            <i class="bi bi-trash me-1"></i>Eliminar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-light border text-center py-5">
+        <i class="bi bi-clipboard-check fs-1 d-block mb-2 text-muted"></i>
+        No tienes tareas todavía.
+        <a href="{% url 'task_create' %}" class="alert-link">Crea tu primera tarea</a>.
+    </div>
+{% endif %}
+{% endblock %}

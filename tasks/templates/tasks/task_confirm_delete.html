@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar tarea · TaskFlow INACAP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-md-6 col-lg-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-danger text-white py-3">
+                <h1 class="h5 mb-0"><i class="bi bi-trash me-2"></i>Eliminar tarea</h1>
+            </div>
+            <div class="card-body p-4">
+                <p class="mb-3">¿Estás seguro de que deseas eliminar la siguiente tarea? Esta acción no se puede deshacer.</p>
+
+                <div class="border rounded-3 p-3 mb-4" style="background-color: var(--soft-bg);">
+                    <p class="fw-bold mb-1">{{ task.title }}</p>
+                    {% if task.description %}
+                        <p class="small text-muted mb-1">{{ task.description|truncatechars:120 }}</p>
+                    {% endif %}
+                    <p class="small text-muted mb-2">
+                        <i class="bi bi-calendar-event text-inacap me-1"></i>
+                        Vence: {{ task.due_date|date:'d/m/Y' }}
+                    </p>
+                    {% if task.status == 'PENDING' %}
+                        <span class="badge bg-warning text-dark">Pendiente</span>
+                    {% elif task.status == 'IN_PROGRESS' %}
+                        <span class="badge bg-info text-dark">En progreso</span>
+                    {% else %}
+                        <span class="badge bg-success">Completada</span>
+                    {% endif %}
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger flex-fill">
+                            <i class="bi bi-trash me-1"></i>Sí, eliminar
+                        </button>
+                        <a href="{% url 'task_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
