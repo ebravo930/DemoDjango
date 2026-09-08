@@ -63,6 +63,10 @@ archivo (modelo, formulario, servicio, vista, template).
    `POST /tareas/<pk>/estado/` con `status=...` y responde `JsonResponse`
    (200/400/403/404); la transición la gobierna `update_task_status` del
    servicio (validación + autorización de dominio).
+4. **Auditoría externa en la nube (Supabase)** — cada creación y cambio de
+   estado se registra además en la tabla `task_audit_log` de Supabase vía
+   `tasks/supabase_client.py` (fail-safe: sin credenciales o sin red la app
+   sigue funcionando 100% local).
 
 Para mostrar a los alumnos el viaje de una feature entre ramas:
 
@@ -226,6 +230,7 @@ DemoDjango/
     ├── views.py               # 🎮 Controlador (CBV + LoginRequiredMixin)
     ├── urls.py                # Rutas de la app
     ├── admin.py
+    ├── supabase_client.py     # ☁️ Cliente Supabase fail-safe (auditoría, rama dev)
     ├── migrations/
     ├── tests/                 # 🧪 Suite por capas (un módulo por capa)
     │   ├── test_models.py     #    Persistencia: ORM, defaults, for_user
@@ -234,6 +239,44 @@ DemoDjango/
     │   └── test_views.py      #    Control: HTTP, permisos y renders
     └── templates/tasks/       # 🎨 Presentación (list / form / delete)
 ```
+
+---
+
+## ☁️ Auditoría externa con Supabase (solo rama `dev`)
+
+`main` permanece **100% SQLite local, sin dependencias externas**. En `dev`,
+cada evento de negocio (crear tarea, cambiar estado) se registra además en la
+tabla `task_audit_log` de un proyecto Supabase, como práctica de auditoría en
+la nube. La comunicación vive aislada en `tasks/supabase_client.py` y se
+dispara desde `tasks/services.py` sin alterar firmas ni lógica base.
+
+**Seguridad:** las credenciales NUNCA se escriben en el código ni se suben a
+Git. Se leen desde `.env` (ignorado por `.gitignore`) vía `python-dotenv`:
+
+```bash
+# 1) Crear tu .env a partir de la plantilla versionada y completar las claves
+cp .env.example .env
+#    SUPABASE_URL=https://tu-proyecto.supabase.co
+#    SUPABASE_KEY=tu-anon-o-publishable-key
+
+# 2) Crear la tabla de auditoría en Supabase (SQL Editor)
+#    Ejecuta el DDL de docs/supabase_setup.sql
+
+# 3) Instalar dependencias y probar
+pip install -r requirements.txt
+python manage.py test
+python manage.py runserver
+```
+
+**Fail-safe:** si no hay credenciales, no hay internet o Supabase responde con
+error, `log_task_event_to_supabase()` retorna `False` sin lanzar excepciones y
+la aplicación sigue funcionando al 100% en local. Con credenciales activas
+verás en consola líneas `[SUPABASE AUDIT]` además de los `[AUDIT]` locales.
+
+**Testing sin internet:** los tests de `tasks/tests/test_services.py` usan
+`unittest.mock.patch` para verificar los parámetros despachados (`CREATED`,
+`STATUS_CHANGED_TO_<estado>`) y el comportamiento fail-safe ante timeouts o
+errores de API, sin realizar llamadas reales a la red.
 
 ---
 
